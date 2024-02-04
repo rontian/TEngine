@@ -24,7 +24,7 @@ namespace TEngine
         /// 窗口组件名称。
         /// </summary>
         // ReSharper disable once InconsistentNaming
-        public string name { private set; get; } = nameof(UIWidget);
+        public string name { protected set; get; } = string.Empty;
 
         /// <summary>
         /// UI类型。
@@ -102,6 +102,11 @@ namespace TEngine
                 for (int i = 0; i < listChild.Count; i++)
                 {
                     var uiWidget = listChild[i];
+                    
+                    if (uiWidget == null)
+                    {
+                        continue;
+                    }
 
                     TProfiler.BeginSample(uiWidget.name);
                     var needValid = uiWidget.InternalUpdate();
@@ -208,6 +213,7 @@ namespace TEngine
             RestChildCanvas(parentUI);
             parent = parentUI;
             Parent.ListChild.Add(this);
+            Parent.SetUpdateDirty();
             ScriptGenerator();
             BindMemberProperty();
             RegisterEvent();
@@ -237,6 +243,7 @@ namespace TEngine
                 return false;
             }
 
+            name = GetType().Name;
             transform = go.GetComponent<Transform>();
             rectTransform = transform as RectTransform;
             gameObject = go;
@@ -278,6 +285,8 @@ namespace TEngine
         /// </summary>
         internal void OnDestroyWidget()
         {
+            Parent?.SetUpdateDirty();
+            
             RemoveAllUIEvent();
 
             foreach (var uiChild in ListChild)
